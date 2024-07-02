@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ru.yandex.practicum.filmorate.exceptions.ModelOperationException;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 
 import java.time.LocalDateTime;
 
@@ -34,5 +36,29 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST.value())
                 .build();
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler()
+    public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException e, HttpServletRequest request) {
+        log.error("NotFoundException: {}", e.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .error(e.getMessage() + "; ")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ModelOperationException.class)
+    public ResponseEntity<ErrorResponse> handleModelOperationException(RuntimeException e, HttpServletRequest request) {
+        log.error("ModelOperationException: {}", e.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .error(e.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

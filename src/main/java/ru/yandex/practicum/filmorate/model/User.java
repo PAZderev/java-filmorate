@@ -5,6 +5,8 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.validators.login.LoginAnnotation;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 public class User {
@@ -19,5 +21,6 @@ public class User {
     private String login;
     @PastOrPresent(message = "Birthday must be past or present")
     private LocalDate birthday;
+    private Set<Long> friendList = new HashSet<>();
 
 }
