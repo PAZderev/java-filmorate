@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.ModelOperationException;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
@@ -14,7 +15,7 @@ import java.util.*;
 public class UserService {
     private final UserStorage userStorage;
 
-    public UserService(UserStorage userStorage) {
+    public UserService(@Qualifier UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -23,8 +24,10 @@ public class UserService {
         User currentUser = userStorage.getUser(userId);
         User newFriendUser = userStorage.getUser(newFriendId);
         validateUsers(currentUser, newFriendUser);
-        currentUser.getFriendList().add(newFriendId);
-        newFriendUser.getFriendList().add(userId);
+        currentUser.getSentFriendRequests().add(newFriendId);
+        newFriendUser.getReceivedFriendRequests().add(userId);
+        userStorage.updateUser(currentUser);
+        userStorage.updateUser(newFriendUser);
         log.info("User {} added new friend: {} ", userId, newFriendId);
         return true;
     }
@@ -34,8 +37,10 @@ public class UserService {
         User currentUser = userStorage.getUser(userId);
         User deleteFriend = userStorage.getUser(friendId);
         validateUsers(currentUser, deleteFriend);
-        currentUser.getFriendList().remove(friendId);
-        deleteFriend.getFriendList().remove(userId);
+        currentUser.getSentFriendRequests().remove(friendId);
+        deleteFriend.getReceivedFriendRequests().remove(userId);
+        userStorage.updateUser(deleteFriend);
+        userStorage.updateUser(currentUser);
         log.info("User {} deleted friend: {} ", userId, friendId);
         return true;
     }
@@ -49,18 +54,16 @@ public class UserService {
         }
         return userStorage.getAllUsers()
                 .stream()
-                .filter(streamUser -> userStorage.getUser(user.getId()).getFriendList().contains(streamUser.getId()))
+                .filter(streamUser -> user.getSentFriendRequests().contains(streamUser.getId()))
                 .toList();
     }
 
     public Collection<User> getFriendCommon(long id, long otherId) {
         log.info("User {} getting friends common with friend {}", id, otherId);
-        Set<Long> intersection = new HashSet<>(userStorage.getUser(id).getFriendList());
-        intersection.retainAll(userStorage.getUser(otherId).getFriendList());
-
-        return userStorage.getAllUsers().stream()
-                .filter(user -> intersection.contains(user.getId()))
-                .toList();
+        Set<User> firstPersonFriends = new HashSet<>(getFriends(id));
+        Set<User> secondPersonFriends = new HashSet<>(getFriends(otherId));
+        firstPersonFriends.retainAll(secondPersonFriends);
+        return firstPersonFriends;
     }
 
     private void validateUsers(User one, User two) {

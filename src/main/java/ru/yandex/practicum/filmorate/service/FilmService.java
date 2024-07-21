@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.ModelOperationException;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
@@ -17,7 +18,7 @@ public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
 
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(@Qualifier FilmStorage filmStorage, @Qualifier UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
     }
@@ -33,6 +34,7 @@ public class FilmService {
             throw new ModelOperationException("Film already liked");
         }
         filmToBeLiked.getUsersLiked().add(userId);
+        filmStorage.updateFilm(filmToBeLiked);
         log.info("Film {} liked by user {}", filmToBeLiked, currentUser);
         return filmToBeLiked;
     }
@@ -47,6 +49,7 @@ public class FilmService {
             throw new ModelOperationException("Film not liked by user");
         }
         filmToBeDisliked.getUsersLiked().remove(userId);
+        filmStorage.updateFilm(filmToBeDisliked);
         log.info("Deleted like from film {} by {}", filmToBeDisliked, currentUser);
         return true;
     }
