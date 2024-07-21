@@ -21,6 +21,6 @@ public class User {
     private String login;
     @PastOrPresent(message = "Birthday must be past or present")
     private LocalDate birthday;
-    private Set<Long> friendList = new HashSet<>();
-
+    private Set<Long> sentFriendRequests = new HashSet<>();
+    private Set<Long> receivedFriendRequests = new HashSet<>();
 }
